@@ -1,0 +1,11 @@
+fastapi>=0.95.0
+uvicorn[standard]>=0.22.0
+httpx>=0.24.0
+requests>=2.31.0
+pydantic>=2.6.0
+python-dotenv>=1.0.0
+pytest>=7.4.0
+
+# Optional dev/runtime packages (not required for pure mocked tests)
+# transformers>=4.40.0
+# pyaxcl / PyAXEngine are expected on the target device and are not listed here as pip-installable in all environments.

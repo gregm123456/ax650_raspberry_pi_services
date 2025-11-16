@@ -1,0 +1,13 @@
+[Unit]
+Description=Qwen3-4B AX650 Chat Completion Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/qwen3-4b
+ExecStart=/opt/qwen3-4b/bin/run_qwen3_4b_service.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
