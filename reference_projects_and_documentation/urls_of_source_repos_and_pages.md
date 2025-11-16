@@ -1,3 +1,5 @@
+# The following GitHub forks are included in this repo as git submodules under:
+# `reference_projects_and_documentation/`
 https://github.com/gregm123456/ax-llm
 https://github.com/gregm123456/ax-pipeline
 https://github.com/gregm123456/pulsar2-docs
