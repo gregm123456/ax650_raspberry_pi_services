@@ -23,5 +23,14 @@ Mirroring Hugging Face to GitHub
 	```
 	After pushing, ensure the large model files are either excluded (via `.gitignore`/git LFS) or removed from history (see `git-filter-repo`) before using it as a submodule.
 
+Dev setup (recommended)
+- Create a venv and install dev dependencies:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements-dev.txt
+```
+
 Branch naming
 - The main branch used in this repo is `main`. Submodules may track other default branches; please verify and update them if needed.
