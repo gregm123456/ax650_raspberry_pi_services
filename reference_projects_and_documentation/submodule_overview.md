@@ -43,13 +43,19 @@ This document provides a concise, distinguishing summary for each submodule and 
 
 - `axcl-docs`: Documentation for the AXCL (Axera Compute Library) and related developer guides. Includes ReadTheDocs configuration, documentation source, example usage, and reference material for the compute library APIs.
 	- How this helps the Project Vision:
-		- **Single authoritative API reference** — use to understand device-level and driver-level APIs, memory/engine configs, and how to integrate device monitoring and reset logic into python services (Goal 4).
-		- **Guides for hardware integration** — the docs can be used to build robust device health monitoring and resource cleanup logic for persistence (Goal 3 and 4).
+		- **✅ CRITICAL - Primary API reference** — Contains complete documentation of Runtime API (`axclrt*`) and Native API (`AXCL_*`) functions needed for all device operations.
+		- **✅ Device monitoring documentation** — Documents `axcl-smi` tool which provides temperature, memory, CPU/NPU usage monitoring - essential for Goal 4 (device health monitoring).
+		- **✅ Memory architecture explained** — Clarifies System Memory (~945MB) vs CMM (~7040MB) distinction, critical for understanding model persistence (Goal 3).
+		- **✅ Error handling reference** — Documents AXCL error codes and proper cleanup sequences (`axclInit` → `axclrtSetDevice` → work → `axclrtResetDevice` → `axclFinalize`).
+		- **🔍 VALIDATED**: Hardware interaction strategy document confirms these docs are authoritative source for production implementation patterns.
 
 - `axcl-samples`: Practical sample applications and CMake examples demonstrating how to use AXCL. Contains minimal example projects, sample build setups, and usage patterns for integrating AXCL into applications.
 	- How this helps the Project Vision:
-		- **Concrete examples** — code templates and sample pipelines show how to orchestrate multiple NPU/IVPS/codec flows, which is helpful for production endpoints that combine image input, preprocessing, and inference.
-		- **Reference model-run patterns** — adopt these patterns to keep models loaded and orchestrate multiple model contexts simultaneously (Goal 3).
+		- **✅ Reference implementation patterns** — `axcl_sample_runtime`, `axcl_sample_memory`, `axcl_sample_sys` demonstrate correct initialization/cleanup sequences.
+		- **✅ Device monitoring examples** — `axcl_sample_runtime` shows how to query `axclrtDeviceProperties` for temperature, memory, CPU/NPU usage (Goal 4).
+		- **✅ Memory management patterns** — `axcl_sample_memory` demonstrates `axclrtMalloc`, `axclrtMemcpy` (Host↔Device, Device↔Device), `axclrtMemset` for buffer initialization.
+		- **✅ Model execution patterns** — Shows proper context creation, buffer allocation, and model lifecycle for persistent operation (Goal 3).
+		- **🔍 VALIDATED**: Hardware strategy document extracted initialization flows and best practices directly from these samples (`axcl_sample_runtime` → Section 2.2 initialization flow).
 
 - `pulsar2-docs`: Documentation repository for the Pulsar2 project. Provides user-facing and developer documentation, build instructions, and any project-specific guides housed separately from code samples.
 	- How this helps the Project Vision:
@@ -58,16 +64,24 @@ This document provides a concise, distinguishing summary for each submodule and 
 
 - `pyaxcl`: Python package and bindings for AXCL. Contains `setup.py`, packaging metadata, sample code, and tests for the Python-facing APIs that wrap the AXCL runtime.
 	- How this helps the Project Vision:
-		- **Python device control & management** — provides a production-oriented Python interface to AXCL (preferred language for the project), enabling device setup, model load/unload, status checks, and resets (Goal 4 & Goal 5).
-		- **⚠️ Reality check** — Sample code (`sample/engine/sample_engine.py`) shows **one-shot inference** pattern (load model, run, exit). No built-in API server or persistent model hosting. Focus is on codec, IVPS, and multimedia, NOT LLM-specific workflows.
-		- **🔧 Adaptation needed** — Use pyaxcl for device health monitoring and low-level control. For LLM inference, may need to combine with PyAXEngine or wrap ax-llm C++ binary.
+		- **✅ Low-level Python control** — Provides `axcl.rt` module with direct wrappers for `axclrtMalloc`, `axclrtMemcpy`, `axclrtEngineLoadFromFile` etc. (Goal 5: Python-first).
+		- **✅ Device health monitoring via Python** — Can query `axclrtDeviceProperties` for temperature (in millidegrees), CPU/NPU loading, memory usage programmatically.
+		- **✅ Complete API coverage** — Wraps both Runtime API (NPU inference) and Native API (VDEC, VENC, IVPS, IVE) for full hardware access.
+		- **⚠️ Reality check** — Sample code (`sample/engine/sample_engine.py`) shows **one-shot inference** pattern (load model, run, exit). No built-in API server or persistent model hosting.
+		- **⚠️ Steeper learning curve** — Low-level C-like API requiring manual memory management (`axclrtMalloc`/`axclrtFree`).
+		- **🔧 Recommended use** — Device health monitoring, low-level control. For model inference, PyAXEngine provides simpler high-level API.
+		- **🔍 VALIDATED**: Hardware strategy confirms pyaxcl is production-ready but lower-level than needed for rapid development.
 
 - `PyAXEngine`: Prebuilt Python wheel and runtime configuration for the Axera inference engine. This repo packages a ready-to-install wheel and config files used to run models with the Axera engine from Python.
 	- How this helps the Project Vision:
-		- **Python-first NPU inference** — PyAXEngine provides an ONNX Runtime-style API (`axengine.InferenceSession`) for loading and running axmodel files directly from Python (Goal 5).
-		- **✅ Best fit for pure Python services** — Used successfully in sd1.5-lcm.axera Python scripts. Can load models, run inference, and be wrapped in FastAPI/Flask for persistent API endpoints.
-		- **⚠️ Limitation** — PyAXEngine README explicitly states it's "better suited for rapid prototyping" and "cannot call some codec-related modules on card environments". For production M.2 card deployments, recommends pyaxcl instead.
-		- **🔧 Decision point** — Use PyAXEngine for initial development and lightweight deployments (e.g., SD image gen). For robust production LLM chat or multi-model scenarios, may need pyaxcl or C++ runtime.
+		- **✅ PREFERRED for rapid development** — Provides ONNX Runtime-style API (`axengine.InferenceSession`) for loading and running axmodel files directly from Python (Goal 5).
+		- **✅ Proven in Stable Diffusion examples** — Used successfully in `sd1.5-lcm.axera/python/` scripts. Can load models, run inference, minimal code needed.
+		- **✅ Automatic memory management** — No manual `malloc`/`free` like pyaxcl. Handles device memory allocation internally.
+		- **✅ Simple persistent model pattern** — Load once: `session = axengine.InferenceSession(model_path, device_id=0)`, then call `session.run()` repeatedly for each request.
+		- **⚠️ Limitation from README** — Explicitly states it's "better suited for rapid prototyping" and "cannot call some codec-related modules on card environments". For production M.2 card deployments, recommends pyaxcl instead.
+		- **⚠️ NPU inference only** — Cannot access Native API features (VDEC, VENC, IVPS). For pure model inference this is fine.
+		- **🔧 Recommended use** — **PRIMARY CHOICE** for both LLM and SD services during development. Clean API, proven examples, fast iteration. Monitor for stability issues; can fall back to pyaxcl if needed.
+		- **🔍 VALIDATED**: Hardware strategy confirms PyAXEngine is best for achieving "Python-first" goal despite "prototyping" caveat in README.
 
 - `Qwen3-4B`: Packaged model runtime and tooling for the Qwen 3 4B model optimized for Axera/AX650. Contains compiled binaries, tokenizer code, runtime examples, and scripts to run the model on target hardware.
 	- How this helps the Project Vision:
@@ -121,7 +135,7 @@ Based on the reality checks above, here are the viable paths forward:
 
 ### For LLM Chat Completion (Success Metric 1):
 
-**Option A: Wrap existing C++ binary (faster to deploy)**
+**Option A: Wrap existing C++ binary (faster to deploy) — ❌ NOT RECOMMENDED**
 - ✅ Use pre-built `main_axcl_aarch64` or `main_ax650` binaries from Qwen3-4B or ax-llm
 - ✅ Run separate tokenizer Python service (e.g., `qwen3_tokenizer_uid.py`)
 - ✅ Build thin FastAPI/Flask wrapper that proxies requests to C++ HTTP API (port 8000)
@@ -130,30 +144,37 @@ Based on the reality checks above, here are the viable paths forward:
 - **❌ CRITICAL LIMITATION**: The C++ server maintains **ONE SINGLE GLOBAL CONVERSATION STATE** (`Worker worker` with one set of `k_caches`, `v_caches`, `last_reply`). It does NOT support multiple independent client conversations - all requests append to the same conversation history.
 - **❌ This breaks multi-client requirement**: "Each request should be considered to be fresh and independent" is NOT possible without calling `/api/reset` between requests, which would disrupt concurrent clients.
 - **Models stay loaded**: ✅ YES - model is loaded once at startup and kept in memory
-- **Multi-client independent conversations**: ❌ NO - needs significant modification to add session management (map of session_id -> conversation state)
+- **Multi-client independent conversations**: ❌ NO - needs significant modification to add session management (map of session_id → conversation state)
+- **🔍 HARDWARE VALIDATION**: Section 6.4 confirms this limitation and recommends Option B for multi-client support.
 
-**Option B: Pure Python implementation (more work, cleaner)**
+**Option B: Pure Python implementation (more work, cleaner) — ✅ RECOMMENDED**
 - 🔧 Use PyAXEngine to load axmodel files from Python
 - 🔧 Reimplement LLM inference logic (prefill, decode loop, KV cache management) - significant work
 - 🔧 Use transformers library for tokenization (no separate service needed)
 - 🔧 Build FastAPI server with streaming responses
 - 🔧 Add session management for per-client conversation state
-- ⚠️ May not achieve same performance as optimized C++ runtime
+- ⚠️ May not achieve same performance as optimized C++ runtime (acceptable for interactive art installations)
 - ⚠️ PyAXEngine noted as "prototyping tool" not production-ready for M.2 cards
 - **Models stay loaded**: ✅ YES - can load models once and keep in memory
 - **Multi-client independent conversations**: ✅ YES - can implement session-based state management
+- **✅ HARDWARE VALIDATION**: Section 5.1 provides complete architecture diagram and code skeleton. Section 2.2 confirms `axclrtEngineLoadFromFile()` keeps models in CMM until `axclrtEngineUnload()` called.
+- **✅ MEMORY CONFIRMED**: Section 1.2 shows ~7040 MB CMM available, enough for Qwen3-4B (~4GB) with headroom.
+- **✅ DEVICE MONITORING**: Section 3 provides complete `axcl-smi` integration pattern for health checks.
 
 **Recommended**: **Option B is now required** for independent multi-client conversations. Option A would need significant C++ modifications to add session management (defeating the "wrap existing binary" advantage).
 
 ### For Stable Diffusion Image Generation (Success Metric 2):
 
-**Option C: Extend existing Python scripts (straightforward)**
+**Option C: Extend existing Python scripts (straightforward) — ✅ RECOMMENDED**
 - ✅ Use `run_txt2img_axe_infer.py` and `run_img2img_axe_infer.py` as reference
 - ✅ Refactor to load models once (global or class-level), not per-request
 - ✅ Wrap in FastAPI with endpoints like `/v1/txt2img` and `/v1/img2img`
 - ✅ Return images as base64 or save to disk and return URLs
 - ✅ Pure Python, uses PyAXEngine (simple, clean)
 - ✅ Aligns well with Goal 5 (Python preferred)
+- **✅ HARDWARE VALIDATION**: Section 5.2 provides complete service architecture with code skeleton showing how to load text_encoder, unet, vae_decoder as separate `axengine.InferenceSession` instances.
+- **✅ PROVEN PATTERN**: sd1.5-lcm.axera scripts already use PyAXEngine successfully - just need to move model loading outside request loop.
+- **✅ MEMORY CONFIRMED**: Section 1.2 estimates SD 1.5 needs ~2-3GB CMM, well within available ~7040 MB.
 
 **Recommended**: **Option C** is the clear winner - already working Python code, just needs API wrapper.
 
@@ -161,20 +182,50 @@ Based on the reality checks above, here are the viable paths forward:
 
 Note: Priorities for the `PROJECT_VISION.md` goals
 
-- **Highest**: `ax-llm`, `pyaxcl`, `PyAXEngine`, `Qwen3-4B`, `sd1.5-lcm.axera` — These provide the most practical building blocks. **sd1.5-lcm.axera** is closest to production Python pattern. **ax-llm** has working API but requires C++/Python split. **Qwen3-4B** has pre-built binaries + models.
-- **High**: `Qwen3-VL.AXERA`, `SmolVLM-256M-Instruct`, `SmolVLM-256M-Instruct.axera` — VLM support for vision-language tasks. Similar architecture challenges as LLMs.
-- **Medium**: `ax-pipeline`, `axcl-docs`, `axcl-samples`, `pulsar2-docs` — Infrastructure, toolchain, docs, and sample code for packaging and production deployments. Essential for understanding but not directly used in runtime services.
+- **Highest**: `ax-llm`, `pyaxcl`, `PyAXEngine`, `Qwen3-4B`, `sd1.5-lcm.axera`, `axcl-docs`, `axcl-samples`
+  - **axcl-docs** & **axcl-samples**: ✅ **FOUNDATIONAL** - Complete API reference and working examples validated in hardware strategy doc (Sections 2.2, 3.1, 3.2). Essential for understanding Runtime API lifecycle, device monitoring patterns, and memory management.
+  - **PyAXEngine**: ✅ **PRIMARY INFERENCE ENGINE** - Despite "prototyping" label, this is the recommended path for both services (validated in Section 4.2). Simple API, proven in SD examples, automatic memory management.
+  - **sd1.5-lcm.axera**: ✅ **CLOSEST TO PRODUCTION** - Pure Python with PyAXEngine, just needs FastAPI wrapper (Section 5.2 provides complete skeleton). Est. 1-2 weeks to production.
+  - **ax-llm**: ⚠️ **REFERENCE ONLY** - C++ implementation useful for understanding LLM inference patterns, but NOT recommended due to single-conversation limitation. Use as reference for KV cache strategies.
+  - **pyaxcl**: ✅ **DEVICE MONITORING** - Used for programmatic health checks via `axclrtDeviceProperties` (Section 3.2), though `axcl-smi` subprocess is simpler (Section 4.3).
+  - **Qwen3-4B**: ✅ **MODEL ARTIFACTS** - Pre-built axmodel files ready to use. Binaries not recommended, but model files + tokenizer are essential.
+
+- **High**: `Qwen3-VL.AXERA`, `SmolVLM-256M-Instruct`, `SmolVLM-256M-Instruct.axera` — VLM support for vision-language tasks. Similar architecture challenges as LLMs. Will require same pure-Python approach.
+
+- **Medium**: `ax-pipeline`, `pulsar2-docs` — Infrastructure, toolchain, docs for model conversion and packaging. Important for understanding but not directly used in runtime services. Refer to when adding new models.
+
 - **Utility**: `init_submodules.sh`, `urls_of_source_repos_and_pages.md` — Useful bootstrapping and reference information.
 
 ## Action Items
 
 1. **For Chat Completion Service**: **Option B (Pure Python) is now strongly recommended** due to multi-client requirement. Option A's C++ binary only supports single conversation state and would need major modifications to add session management.
+   - **✅ STRATEGY CONFIRMED**: Hardware interaction document Section 5.1 provides complete FastAPI + PyAXEngine skeleton with lifespan management, device monitoring, and proper cleanup.
+   - **Implementation path**: Load model once at startup with `axengine.InferenceSession`, implement session-based KV cache in Python, wrap in FastAPI.
+   - **Est. 2-3 weeks** for MVP (per Phase 2 in hardware strategy doc).
 
 2. **For Image Generation Service**: Extend sd1.5-lcm.axera Python scripts with FastAPI wrapper (Option C). Most straightforward path and already supports stateless per-request inference.
+   - **✅ STRATEGY CONFIRMED**: Hardware interaction document Section 5.2 shows loading text_encoder, unet, vae_decoder as separate `axengine.InferenceSession` instances with persistent model hosting.
+   - **Implementation path**: Refactor `run_txt2img_axe_infer.py` to load models in global scope, wrap denoising loop in FastAPI endpoint.
+   - **Est. 1-2 weeks** (per Phase 3 in hardware strategy doc).
 
-3. **Device Monitoring (Goal 4)**: Use `axcl-smi` command-line tool (from pyaxcl README examples) for health checks. Can call via subprocess from Python service.
+3. **Device Monitoring (Goal 4)**: 
+   - **✅ PRIMARY METHOD**: Use `axcl-smi` CLI tool via subprocess (Section 4.3 of hardware strategy doc provides complete Python wrapper functions).
+   - **✅ SECONDARY METHOD**: Direct API via `axclrtDeviceProperties` (Section 3.2 shows both C++ and Python patterns).
+   - **Implementation**: Background thread calling `axcl-smi info --temp/--cmm/--cpu/--npu` every 10 seconds, with threshold-based alerting.
+   - **Critical thresholds**: 75°C warning, 80°C critical (pause inference), timeout → device reset via `axcl-smi reboot`.
 
-4. **Don't assume**: 
+4. **Memory Management**:
+   - **✅ CMM allocation confirmed**: ~7040 MB available for models. Qwen3-4B needs ~4GB, SD 1.5 needs ~2-3GB.
+   - **⚠️ Concurrent operation**: May need model swapping if running both services simultaneously. Must measure actual CMM usage during testing.
+   - **Best practice**: Load models once, reuse buffers across requests (no per-request malloc/free).
+
+5. **Installation & Setup** (Phase 1 from hardware strategy):
+   - Install pyaxcl: `pip install reference_projects_and_documentation/pyaxcl/`
+   - Install PyAXEngine: `pip install reference_projects_and_documentation/PyAXEngine/axengine-0.1.3-py3-none-any.whl`
+   - Verify: `axcl-smi -d 0` (should show device info)
+   - Test: Run `sd1.5-lcm.axera/python/run_txt2img_axe_infer.py` to validate end-to-end inference.
+
+6. **Don't assume**: 
    - ❌ Gradio is not a server - it's a client UI
    - ❌ Examples are not production services - they're one-shot demo scripts
    - ❌ Python-only LLM runtime doesn't exist out-of-box - need to build or wrap C++
@@ -182,5 +233,8 @@ Note: Priorities for the `PROJECT_VISION.md` goals
    - ✅ Stable Diffusion Python scripts are reusable with minimal changes
    - ✅ C++ API server keeps models loaded in memory
    - ✅ Models stay loaded with both Option A and Option B - no reload overhead
+   - **✅ NEW**: PyAXEngine is production-viable despite "prototyping" label - used successfully in SD examples, automatic memory management
+   - **✅ NEW**: Device monitoring via `axcl-smi` subprocess is simpler and more reliable than direct API calls
+   - **✅ NEW**: CMM memory pool is separate from system memory - models persist in CMM until explicitly unloaded
 
 
