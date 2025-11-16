@@ -59,7 +59,7 @@ Quickstart Commands (target device)
 ```bash
 python3 -m pip install ./reference_projects_and_documentation/pyaxcl/
 python3 -m pip install ./reference_projects_and_documentation/PyAXEngine/axengine-0.1.3-py3-none-any.whl
-pip3 install fastapi uvicorn transformers safetensors
+pip3 install fastapi uvicorn transformers safetensors openai
 
 # Validate device
 axcl-smi
@@ -71,11 +71,31 @@ MVP FastAPI lifecycle (pseudo-steps)
 - Request: tokenize → fill input → acquire NPU lock → run `session.run()` → decode and return → release lock.  
 - Shutdown: stop accepting requests → drain queue → close session → free buffers → optionally call `axclrtResetDevice()` via `pyaxcl`.
 
+**API Format (OpenAI-compatible)**:
+- Endpoint: `POST /v1/chat/completions`
+- Request body: `{"model": "qwen3-4b-ax650", "messages": [{"role": "user", "content": "..."}], "temperature": 0.9, "max_tokens": 100}`
+- Response: OpenAI chat completion format with `choices[0].message.content`
+
 Smoke Test (curl)
 ```bash
 curl -X POST "http://127.0.0.1:8000/v1/chat/completions" \
 	-H "Content-Type: application/json" \
 	-d '{"model":"qwen3-4b-ax650","messages":[{"role":"user","content":"Hello"}], "max_tokens":64}'
+```
+
+Smoke Test (OpenAI Python client - for coyote_interactive compatibility)
+```python
+from openai import OpenAI
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="not-needed")
+
+completion = client.chat.completions.create(
+    model="qwen3-4b-ax650",
+    messages=[{"role": "user", "content": "Hello"}],
+    max_tokens=64,
+    temperature=0.9
+)
+
+print(completion.choices[0].message.content)
 ```
 
 Failure modes & mitigation
@@ -88,3 +108,54 @@ Immediate Next Tasks (pick one)
 2. Produce a detailed KV-cache memory budgeting tool and per-model CMM planner.
 
 Choose which immediate task to implement and I will scaffold files and run readonly checks before committing further edits.
+
+---
+
+## Interactive Art Installation Requirements (from coyote_interactive analysis)
+
+### Performance Targets
+- **Response latency**: < 3 seconds for 100-token responses (critical for interactive UX)
+- **Cold start**: Model must stay loaded (no startup delay on requests)
+- **Context window**: Support 2048+ tokens (long conversations with system message)
+
+### API Compatibility
+- **Primary**: OpenAI-compatible `/v1/chat/completions` endpoint
+- **Client**: Must work with `openai` Python package (drop-in replacement for Azure/OpenAI)
+- **Parameters**: Support `temperature`, `max_tokens`, `top_p`, `stop` per request
+- **Stateless**: Client sends full conversation array each request (no server-side sessions)
+
+### Typical Usage Pattern
+```json
+{
+  "model": "qwen3-4b-ax650",
+  "messages": [
+    {"role": "system", "content": "You are Wile E. Coyote..."},
+    {"role": "user", "content": "What did you hear on TV?"},
+    {"role": "assistant", "content": "I heard about..."},
+    {"role": "user", "content": "How will that help you?"}
+  ],
+  "temperature": 0.9,
+  "max_tokens": 125,
+  "top_p": 0.95
+}
+```
+
+### Reliability Requirements
+- **Uptime**: 24+ hours unattended operation
+- **Error handling**: Graceful failures (don't crash the installation)
+- **Health monitoring**: `/health` endpoint for external monitoring
+- **Auto-recovery**: Handle device resets/errors without manual intervention
+
+### Migration Simplicity
+Target: < 10 lines of code change in existing projects:
+```python
+# OLD
+from openai import AzureOpenAI
+client = AzureOpenAI(azure_endpoint="...", api_key="...")
+
+# NEW  
+from openai import OpenAI
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="not-needed")
+
+# Same API calls work!
+```
