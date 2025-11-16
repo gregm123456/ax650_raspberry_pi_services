@@ -179,6 +179,8 @@ axclrtEngineUnload(modelId);
 
 **Basic Device Query**:
 ```bash
+# Note: Must source /etc/profile before using AXCL commands
+source /etc/profile
 axcl-smi              # Show all devices with summary
 axcl-smi -d 0         # Show device 0 only
 ```

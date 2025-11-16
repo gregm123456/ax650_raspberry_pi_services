@@ -136,6 +136,14 @@ pip install -r services/qwen3-4b-raspi/requirements.txt
 uvicorn services.qwen3_4b_raspi.src.api:app --host 0.0.0.0 --port 8080 --reload
 ```
 
+Note: On Raspberry Pi systems configured for the AX650/LLM8850 runtime, make sure the system environment for AXCL tools is loaded before running accelerator commands or the runtime binary. In a shell session run:
+
+```bash
+# Ensure AXCL CLI and library paths are available to your shell/session
+source /etc/profile
+```
+
+
 -----
 Spec authored to integrate with the repository's `reference_projects_and_documentation` submodules and to be implementable in a contained `services/qwen3-4b-raspi` subfolder.
 

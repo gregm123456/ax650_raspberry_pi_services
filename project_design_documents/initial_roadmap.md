@@ -62,6 +62,8 @@ python3 -m pip install ./reference_projects_and_documentation/PyAXEngine/axengin
 pip3 install fastapi uvicorn transformers safetensors openai
 
 # Validate device
+# Note: Must source /etc/profile before using AXCL commands
+source /etc/profile
 axcl-smi
 axcl-smi info --cmm -d 0
 ```

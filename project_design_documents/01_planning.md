@@ -301,6 +301,8 @@ async def device_monitor():
 
 4. [ ] Verify device access
    ```bash
+   # Note: Must source etc/profile before using AXCL commands
+   source /etc/profile
    axcl-smi
    axcl-smi info --cmm -d 0
    axcl-smi info --temp -d 0
