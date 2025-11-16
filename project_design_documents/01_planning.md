@@ -878,13 +878,16 @@ Once this plan is approved, proceed to:
 - **Action**: Benchmark in Phase 1
 
 **Q3**: Does PyAXEngine support all necessary inference parameters (temperature, top_p)?
-- **Action**: Test in Phase 0, may need to use lower-level API
+- **Resolution**: Using `main_api_ax650` HTTP API instead, which supports temperature, top_p, and other parameters via JSON requests to `/api/chat` and `/api/generate` endpoints.
 
 **Q4**: Is there a reference implementation for LLM inference with PyAXEngine?
-- **Action**: Search reference_projects for examples
+- **Resolution**: `reference_projects_and_documentation/Qwen3-4B/main_api_ax650` is the reference implementation, exposing HTTP REST API from `ax-llm/src/main_api.cpp`. This is the canonical approach.
 
 **Q5**: What is the exact format of the .axmodel file I/O?
 - **Action**: Inspect with PyAXEngine metadata functions
+
+**Q6**: How to ensure conversation independence while keeping the model loaded?
+- **Resolution**: Call `POST /api/reset` before each new conversation. This clears the KV cache and runs prefill on the system prompt (~50-100ms overhead), while keeping the model loaded in memory. Trade-off is acceptable for art installations.
 
 ---
 
