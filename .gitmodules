@@ -41,3 +41,6 @@
 [submodule "reference_projects_and_documentation/SmolVLM-256M-Instruct"]
 	path = reference_projects_and_documentation/SmolVLM-256M-Instruct
 	url = git@github.com:gregm123456/SmolVLM-256M-Instruct.git
+[submodule "coyote_interactive"]
+	path = coyote_interactive
+	url = https://github.com/gregm123456/coyote_interactive
