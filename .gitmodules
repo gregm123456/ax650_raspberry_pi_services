@@ -1,0 +1,27 @@
+[submodule "reference_projects_and_documentation/ax-llm"]
+	path = reference_projects_and_documentation/ax-llm
+	url = https://github.com/gregm123456/ax-llm
+[submodule "reference_projects_and_documentation/ax-pipeline"]
+	path = reference_projects_and_documentation/ax-pipeline
+	url = https://github.com/gregm123456/ax-pipeline
+[submodule "reference_projects_and_documentation/pulsar2-docs"]
+	path = reference_projects_and_documentation/pulsar2-docs
+	url = https://github.com/gregm123456/pulsar2-docs
+[submodule "reference_projects_and_documentation/axcl-docs"]
+	path = reference_projects_and_documentation/axcl-docs
+	url = https://github.com/gregm123456/axcl-docs
+[submodule "reference_projects_and_documentation/pyaxcl"]
+	path = reference_projects_and_documentation/pyaxcl
+	url = https://github.com/gregm123456/pyaxcl
+[submodule "reference_projects_and_documentation/Qwen3-VL.AXERA"]
+	path = reference_projects_and_documentation/Qwen3-VL.AXERA
+	url = https://github.com/gregm123456/Qwen3-VL.AXERA
+[submodule "reference_projects_and_documentation/SmolVLM-256M-Instruct.axera"]
+	path = reference_projects_and_documentation/SmolVLM-256M-Instruct.axera
+	url = https://github.com/gregm123456/SmolVLM-256M-Instruct.axera
+[submodule "reference_projects_and_documentation/axcl-samples"]
+	path = reference_projects_and_documentation/axcl-samples
+	url = https://github.com/gregm123456/axcl-samples
+[submodule "reference_projects_and_documentation/sd1.5-lcm.axera"]
+	path = reference_projects_and_documentation/sd1.5-lcm.axera
+	url = https://github.com/gregm123456/sd1.5-lcm.axera
