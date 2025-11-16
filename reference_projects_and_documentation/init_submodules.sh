@@ -5,18 +5,20 @@ echo "Initializing submodules..."
 git submodule update --init --recursive
 
 echo "Checking each submodule to find default branch (preferring 'main')..."
-for sm in $(git submodule--helper list | awk '{print $4}'); do
-  echo "Skipping helper list approach — falling back to reading .gitmodules"
-done
+# Loop over submodule paths from .gitmodules and set a branch preference to 'main' if the remote supports it
+while IFS= read -r line; do
+  path="$line"
+  url=$(git config -f .gitmodules --get "submodule.$path.url")
+  if git ls-remote --exit-code --heads "$url" main >/dev/null 2>&1; then
+    echo "Setting branch 'main' for submodule $path"
+    git config -f .gitmodules "submodule.$path.branch" "main"
+  else
+    echo "Submodule $path: no 'main' branch available on remote; keeping default"
+  fi
+done < <(git config -f .gitmodules --get-regexp '^submodule\..*\.path' | awk '{print $2}')
 
-echo "You can use the following commands to try to switch a submodule to 'main' if available:
-cd reference_projects_and_documentation/sd1.5-lcm.axera
-git fetch origin
-if git ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
-  git checkout main || git checkout -b main origin/main
-else
-  echo 'No main branch available for sd1.5-lcm.axera; it remains on master'
-fi
-"
+echo "Syncing and updating submodules after branch preference adjustments..."
+git submodule sync --recursive
+git submodule update --init --recursive
 
 echo "Submodules initialized. See README_SUBMODULES.md for more details."
