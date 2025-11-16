@@ -38,3 +38,6 @@
 [submodule "reference_projects_and_documentation/Qwen3-4B"]
 	path = reference_projects_and_documentation/Qwen3-4B
 	url = git@github.com:gregm123456/Qwen3-4B.git
+[submodule "reference_projects_and_documentation/SmolVLM-256M-Instruct"]
+	path = reference_projects_and_documentation/SmolVLM-256M-Instruct
+	url = git@github.com:gregm123456/SmolVLM-256M-Instruct.git
