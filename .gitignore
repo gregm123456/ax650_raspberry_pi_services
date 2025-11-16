@@ -17,5 +17,8 @@ __pycache__/
 # Large model directories
 models/
 weights/
+# HF mirrors and working copies (local only)
+hf_mirrors/
+reference_projects_and_documentation/huggingface_mirrors/
 # avoid committing LFS files accidentally
 *.gltf
