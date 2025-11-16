@@ -34,13 +34,13 @@
 	url = https://github.com/gregm123456/sd1.5-lcm.axera
 [submodule "reference_projects_and_documentation/PyAXEngine"]
 	path = reference_projects_and_documentation/PyAXEngine
-	url = git@github.com:gregm123456/PyAXEngine.git
+	url = https://github.com/gregm123456/PyAXEngine
 [submodule "reference_projects_and_documentation/Qwen3-4B"]
 	path = reference_projects_and_documentation/Qwen3-4B
-	url = git@github.com:gregm123456/Qwen3-4B.git
+	url = https://github.com/gregm123456/Qwen3-4B
 [submodule "reference_projects_and_documentation/SmolVLM-256M-Instruct"]
 	path = reference_projects_and_documentation/SmolVLM-256M-Instruct
-	url = git@github.com:gregm123456/SmolVLM-256M-Instruct.git
+	url = https://github.com/gregm123456/SmolVLM-256M-Instruct
 [submodule "coyote_interactive"]
 	path = coyote_interactive
 	url = https://github.com/gregm123456/coyote_interactive
