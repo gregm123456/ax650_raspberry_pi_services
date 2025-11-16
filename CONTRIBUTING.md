@@ -14,5 +14,14 @@ When to fork vs submodule
 Large files and model weights
 - Do not commit large model weights. Keep them in a model manifest and download at runtime or keep them on HF, S3, or GitHub Releases.
 
+Mirroring Hugging Face to GitHub
+- If you mirror a Hugging Face repo to GitHub, clone it as a mirror locally and push to a private or public GitHub repo. Then add it as a submodule. Example:
+	```bash
+	git clone --mirror https://huggingface.co/AXERA-TECH/PyAXEngine repo.git
+	cd repo.git
+	git push --mirror git@github.com:yourorg/PyAXEngine.git
+	```
+	After pushing, ensure the large model files are either excluded (via `.gitignore`/git LFS) or removed from history (see `git-filter-repo`) before using it as a submodule.
+
 Branch naming
 - The main branch used in this repo is `main`. Submodules may track other default branches; please verify and update them if needed.
