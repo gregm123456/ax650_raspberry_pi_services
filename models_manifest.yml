@@ -1,0 +1,13 @@
+models:
+  - id: AXERA-TECH/PyAXEngine
+    type: repo
+    location: huggingface
+    description: "PyAXEngine packaging and runtime components — code and models hosted on HF."
+  - id: AXERA-TECH/Qwen3-4B
+    type: model
+    location: huggingface
+    description: "Qwen3 4B model weights hosted on HF. We don't store weights in this repo."
+  - id: AXERA-TECH/SmolVLM-256M-Instruct
+    type: model
+    location: huggingface
+    description: "SmolVLM 256M model — maintain in HF and download at runtime."
