@@ -9,9 +9,9 @@ https://github.com/gregm123456/Qwen3-VL.AXERA
 https://github.com/gregm123456/SmolVLM-256M-Instruct.axera
 https://github.com/gregm123456/axcl-samples
 https://github.com/gregm123456/sd1.5-lcm.axera
-https://huggingface.co/AXERA-TECH/PyAXEngine/tree/main
-https://huggingface.co/AXERA-TECH/Qwen3-4B/tree/main
-https://huggingface.co/AXERA-TECH/SmolVLM-256M-Instruct/tree/main
+https://github.com/gregm123456/PyAXEngine  # mirrored from https://huggingface.co/AXERA-TECH/PyAXEngine (no model weights in git)
+https://github.com/gregm123456/Qwen3-4B    # mirrored from https://huggingface.co/AXERA-TECH/Qwen3-4B (tokenizer and small files only)
+https://github.com/gregm123456/SmolVLM-256M-Instruct  # mirrored from https://huggingface.co/AXERA-TECH/SmolVLM-256M-Instruct (tokenizer; model weight files not included)
 
 Note:
 sudo wget -qO /etc/apt/keyrings/StackFlow.gpg https://repo.llm.m5stack.com/m5stack-apt-repo/key/StackFlow.gpg
