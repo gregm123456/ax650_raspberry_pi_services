@@ -9,6 +9,11 @@ Key operations
 ```bash
 git submodule update --init --recursive
 ```
+- If files don't appear in submodules after init (due to LFS or other issues), force checkout in each submodule:
+```bash
+GIT_LFS_SKIP_SMUDGE=1 git submodule foreach --recursive 'git reset --hard HEAD'
+```
+
 - To fetch the latest upstream for a forked submodule, add an `upstream` remote in the submodule and pull from it:
 ```bash
 cd reference_projects_and_documentation/ax-llm
@@ -39,3 +44,7 @@ cd ../../
 git add reference_projects_and_documentation/ax-llm
 git commit -m "chore: update ax-llm submodule to latest upstream/main"
 ```
+
+Troubleshooting
+- If submodules fail to initialize due to authentication issues, ensure you're logged into GitHub CLI (`gh auth status`) and URLs are HTTPS.
+- For LFS-related errors during checkout, use `GIT_LFS_SKIP_SMUDGE=1` to skip large file downloads.
