@@ -13,11 +13,13 @@ Goals
 - Goal 5: Use python as preferred language wherever possible, but not to a fault!
 
 Non-goals
-- What this project will not do (helps avoid scope creep)
+- We're not looking to change the world and push any upstream changes to external source repos
+- We don't need super-robust enterprise-level deployments, just reasonably-running services for interactive art projects
+- We are not necessarily looking to do new model optimizations, but would rather re-use the available ax650 / llm8850 optimized models
 
 Success metrics
-- Metric 1: e.g., latency, uptime, or adoption target
-- Metric 2: e.g., test coverage, error rate
+- Metric 1: A reliable, runnable chat completion system service (for M5Stack ax650 / llm8850 PCIe accelerator running on a Raspberry Pi 5 computer running contemporary Bookworm Ubuntu Raspberry Pi OS) that presents an OpenAI-compatible chat completion API endpoint backed by an LLM optimzed for ax650 / llm8850 PCIe accelerator. The service will keep the model loaded unless unloaded or swapped for a different model.
+- Metric 2: A reliable, runnable stable diffusion style image generator system service (for M5Stack ax650 / llm8850 PCIe accelerator running on a Raspberry Pi 5 computer running contemporary Bookworm Ubuntu Raspberry Pi OS) that presents an automatic1111 / stable diffusion style image generation API endpoint backed by a model optimzed for ax650 / llm8850 PCIe accelerator. The service will keep the model loaded unless unloaded or swapped for a different model.
 
 Audience & stakeholders
-- Primary users and teams responsible for maintenance
+- Primary use for these standardized interface for generative AI models on M5Stack ax650 / llm8850 PCIe accelerator running on a Raspberry Pi 5 is for standalone interactive art installations
