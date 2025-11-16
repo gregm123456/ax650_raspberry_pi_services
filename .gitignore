@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+# Python env
+.env
+.venv
+# VSCode
+.vscode/
+# Mac
+.DS_Store
+# models or weights
+*.ckpt
+*.pt
+*.bin
+*.tar.gz
+*.zip
+# Large model directories
+models/
+weights/
+# avoid committing LFS files accidentally
+*.gltf
