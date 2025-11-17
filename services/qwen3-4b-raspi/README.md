@@ -32,23 +32,116 @@ The converted Qwen3-4B axmodel files are large and are not included in this repo
 ./scripts/download_qwen3_models.sh
 ```
 
-This will populate `reference_projects_and_documentation/Qwen3-4B/qwen3-4b-ax650/` with the converted model artifacts. After download, start the tokenizer service and the AX runtime (see `reference_projects_and_documentation/Qwen3-4B/README.md`):
+This will populate `reference_projects_and_documentation/Qwen3-4B/qwen3-4b-ax650/` with the converted model artifacts.
+
+### Starting all services (real device)
+
+**Prerequisites:**
+- AX650/LLM8850 hardware with AXCL runtime installed
+- Project virtualenv activated
+- AXCL environment sourced
+
+**Step 1: Stop any existing services**
 
 ```bash
-# start tokenizer
-cd reference_projects_and_documentation/Qwen3-4B
-python3 qwen3_tokenizer_uid.py --host 127.0.0.1 --port 12345 &
-
-# start AX runtime (on device with AX650/LLM8850 and AXCL available)
-./run_qwen3_4b_int8_ctx_ax650.sh
+pkill -f qwen3_tokenizer_uid.py
+pkill -f main_api_axcl_aarch64
+pkill -f uvicorn
 ```
 
-Then set the Python service to use the real runtime and start it (unset mock):
+**Step 2: Start tokenizer service**
 
 ```bash
-export QWEN3_MOCK_RUNTIME=0
-export RUNTIME_HOST=127.0.0.1
-export RUNTIME_PORT=8000
-uvicorn services.qwen3_4b_raspi.src.api:app --host 127.0.0.1 --port 8080
+cd /home/robot/ax650_raspberry_pi_services/reference_projects_and_documentation/Qwen3-4B
+source /etc/profile
+source /home/robot/ax650_raspberry_pi_services/.venv/bin/activate
+nohup python qwen3_tokenizer_uid.py \
+  > /home/robot/ax650_raspberry_pi_services/qwen3_tokenizer.log 2>&1 &
+echo $! > /home/robot/ax650_raspberry_pi_services/qwen3_tokenizer.pid
+```
+
+**Step 3: Start AX runtime (takes ~90 seconds to load)**
+
+```bash
+cd /home/robot/ax650_raspberry_pi_services/reference_projects_and_documentation/Qwen3-4B
+source /etc/profile
+nohup ./main_api_axcl_aarch64 \
+  --system_prompt "You are Qwen, created by Alibaba Cloud. You are a helpful assistant." \
+  --template_filename_axmodel "qwen3-4b-ax650/qwen3_p128_l%d_together.axmodel" \
+  --axmodel_num 36 \
+  --url_tokenizer_model "http://127.0.0.1:12345" \
+  --filename_post_axmodel qwen3-4b-ax650/qwen3_post.axmodel \
+  --filename_tokens_embed qwen3-4b-ax650/model.embed_tokens.weight.bfloat16.bin \
+  --tokens_embed_num 151936 \
+  --tokens_embed_size 2560 \
+  --use_mmap_load_embed 1 \
+  --devices 0 \
+  > /home/robot/ax650_raspberry_pi_services/qwen3_runtime.log 2>&1 &
+echo $! > /home/robot/ax650_raspberry_pi_services/qwen3_runtime.pid
+
+# Wait for model to load (~90 seconds)
+echo "Waiting for runtime to load model..."
+sleep 95
+tail -n 20 /home/robot/ax650_raspberry_pi_services/qwen3_runtime.log
+```
+
+**Step 4: Start FastAPI service**
+
+```bash
+cd /home/robot/ax650_raspberry_pi_services/services/qwen3-4b-raspi/src
+source /etc/profile
+source /home/robot/ax650_raspberry_pi_services/.venv/bin/activate
+nohup uvicorn api:app --host 0.0.0.0 --port 8080 --log-level info \
+  > /home/robot/ax650_raspberry_pi_services/fastapi.log 2>&1 &
+echo $! > /home/robot/ax650_raspberry_pi_services/fastapi.pid
+```
+
+**Step 5: Test end-to-end**
+
+```bash
+# Health check
+curl -sS http://127.0.0.1:8080/health
+
+# Chat completion request
+curl -sS -X POST http://127.0.0.1:8080/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen3-4b",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "Say hello in one sentence."}
+    ]
+  }' | jq .
+
+# Another test
+curl -sS -X POST http://127.0.0.1:8080/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen3-4b",
+    "messages": [
+      {"role": "user", "content": "What is 2+2? Answer in one word."}
+    ]
+  }' | jq -r '.choices[0].message.content'
+```
+
+**Monitoring logs:**
+
+```bash
+# View tokenizer log
+tail -f /home/robot/ax650_raspberry_pi_services/qwen3_tokenizer.log
+
+# View runtime log
+tail -f /home/robot/ax650_raspberry_pi_services/qwen3_runtime.log
+
+# View FastAPI log
+tail -f /home/robot/ax650_raspberry_pi_services/fastapi.log
+```
+
+**Stopping services:**
+
+```bash
+kill $(cat /home/robot/ax650_raspberry_pi_services/qwen3_tokenizer.pid)
+kill $(cat /home/robot/ax650_raspberry_pi_services/qwen3_runtime.pid)
+kill $(cat /home/robot/ax650_raspberry_pi_services/fastapi.pid)
 ```
 

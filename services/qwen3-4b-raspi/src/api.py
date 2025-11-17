@@ -91,8 +91,8 @@ async def completions(req: CompletionRequest):
             system_prompt = m.content
             break
 
-    # Convert messages to runtime format
-    runtime_messages = [{"role": m.role, "content": m.content} for m in req.messages]
+    # Convert messages to runtime format (exclude system messages - they go via reset)
+    runtime_messages = [{"role": m.role, "content": m.content} for m in req.messages if m.role != "system"]
 
     try:
         resp = runtime_adapter.reset_then_chat(system_prompt=system_prompt, messages=runtime_messages, params={
@@ -103,20 +103,21 @@ async def completions(req: CompletionRequest):
         logger.error(f"Inference error: {exc}")
         raise HTTPException(status_code=503, detail=str(exc))
 
-    # Accept either runtime-specific schema or adapt mock schema
-    if isinstance(resp, dict) and "text" in resp:
+    # Runtime returns {"done": true, "message": "..."} or mock returns {"text": "...", "usage": {...}}
+    if isinstance(resp, dict) and "message" in resp:
+        # Real runtime format
+        text = resp["message"]
+        # Estimate token usage from text length
+        usage = {"prompt_tokens": sum(len(m["content"].split()) for m in runtime_messages), 
+                 "completion_tokens": len(text.split())}
+    elif isinstance(resp, dict) and "text" in resp:
+        # Mock format
         text = resp["text"]
         usage = resp.get("usage", {"prompt_tokens": 0, "completion_tokens": len(text.split())})
     else:
-        # assume runtime returns {"id":..., "choices":[{"message":{"role":"assistant","content":"..."}}]}
-        if isinstance(resp, dict) and "choices" in resp:
-            choice = resp["choices"][0]
-            text = choice.get("message", {}).get("content", "")
-            usage = resp.get("usage", {"prompt_tokens": 0, "completion_tokens": len(text.split())})
-        else:
-            # fallback string
-            text = str(resp)
-            usage = {"prompt_tokens": 0, "completion_tokens": len(text.split())}
+        # Fallback
+        text = str(resp)
+        usage = {"prompt_tokens": 0, "completion_tokens": len(text.split())}
 
     out = CompletionResponse(
         id=f"chatcmpl-{uuid.uuid4().hex[:8]}",
