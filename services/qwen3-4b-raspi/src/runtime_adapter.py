@@ -74,18 +74,16 @@ class RuntimeAdapter:
                 raise RuntimeError(f"Failed to reset runtime: {exc}") from exc
 
             # 2. Attempt to chat with a retry loop
-            payload: Dict[str, Any] = {"messages": messages}
-            
-            # Debug: Log the first and last message to verify order
-            if messages:
-                print(f"DEBUG: Total messages being sent: {len(messages)}")
-                print(f"DEBUG: Message[0] role={messages[0].get('role')}, length={len(messages[0].get('content', ''))}, hash={hash(messages[0].get('content', ''))}")
-                print(f"DEBUG: Message[-1] role={messages[-1].get('role')}, length={len(messages[-1].get('content', ''))}, hash={hash(messages[-1].get('content', ''))}")
-                # Show a distinctive snippet from the middle of each message
-                first_content = messages[0].get('content', '')
-                last_content = messages[-1].get('content', '')
-                print(f"DEBUG: Message[0] middle snippet: ...{first_content[len(first_content)//2:len(first_content)//2+80]}...")
-                print(f"DEBUG: Message[-1] middle snippet: ...{last_content[len(last_content)//2:len(last_content)//2+80]}...")
+            # CRITICAL FIX: The C++ runtime (main_api_axcl_aarch64) reverses the message array internally.
+            # We must reverse it here so it gets reversed back to the correct order.
+            # Evidence: Testing with reversed vs. non-reversed conversations showed the runtime
+            # consistently responds based on the FIRST message sent, not the LAST (most recent).
+            # See: https://github.com/gregm123456/ax650_raspberry_pi_services/issues/XXX
+            reversed_messages = list(reversed(messages))
+            print(f"DEBUG: Sending {len(reversed_messages)} messages to runtime")
+            for i, msg in enumerate(reversed_messages):
+                print(f"  Message {i}: {msg['role']}: {msg['content'][:50]}...")
+            payload: Dict[str, Any] = {"messages": reversed_messages}
             
             max_retries = 20  # Max attempts, increased for safety
             retry_delay = 0.2  # Seconds to wait between retries (200ms)

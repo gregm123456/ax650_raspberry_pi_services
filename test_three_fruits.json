@@ -1,0 +1,12 @@
+{
+  "model": "qwen3-4b",
+  "messages": [
+    {"role": "user", "content": "Tell me about apples."},
+    {"role": "assistant", "content": "Apples are crisp and sweet."},
+    {"role": "user", "content": "Tell me about bananas."},
+    {"role": "assistant", "content": "Bananas are soft and yellow."},
+    {"role": "user", "content": "Tell me about cherries."},
+    {"role": "assistant", "content": "Cherries are small and tart."},
+    {"role": "user", "content": "Please list the three fruits we just discussed."}
+  ]
+}

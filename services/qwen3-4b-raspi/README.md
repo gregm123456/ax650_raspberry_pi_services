@@ -145,3 +145,22 @@ kill $(cat /home/robot/ax650_raspberry_pi_services/qwen3_runtime.pid)
 kill $(cat /home/robot/ax650_raspberry_pi_services/fastapi.pid)
 ```
 
+## Known Issues
+
+### Message Order Reversal in Runtime
+
+**Issue**: The C++ runtime binary (`main_api_axcl_aarch64`) reverses the message array internally before processing.
+
+**Symptom**: When sending a conversation with messages `[msg1, msg2, msg3]`, the runtime processes them as `[msg3, msg2, msg1]`, causing the model to respond based on the first message sent rather than the most recent one.
+
+**Root Cause**: The runtime's internal message handling reverses the array, likely due to how it builds the conversation context or manages the KV cache.
+
+**Fix**: The `runtime_adapter.py` automatically reverses messages before sending them to the runtime, so they get reversed back to the correct order during processing.
+
+**Testing Evidence**:
+- Original order conversation: Model responded about "Six-Ounce Center" (first message topic)
+- Reversed order conversation: Model responded about "vaccines/plants/hot deal" (what was originally the last message, now first)
+- Product list test: When asked to list products, model only mentioned the first product when using original order
+
+**Date Discovered**: November 16, 2025
+

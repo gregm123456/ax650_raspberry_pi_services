@@ -584,4 +584,85 @@ Do NOT commit:
 
 ---
 
+## Critical Bug: Message Order Reversal in Runtime
+
+**Date Discovered**: November 16, 2025
+
+### Problem Description
+
+The C++ runtime binary (`main_api_axcl_aarch64`) **reverses the message array internally** before processing conversations. This causes the model to respond based on the FIRST message sent to the API, rather than the LAST (most recent) message.
+
+### Symptoms
+
+- When sending a conversation like: `[system_msg, user_msg_1, assistant_msg_1, user_msg_2, assistant_msg_2, user_msg_3]`
+- The runtime processes it as: `[user_msg_3, assistant_msg_2, user_msg_2, assistant_msg_1, user_msg_1, system_msg]`
+- The model generates a response based on `user_msg_3` (which it sees first after reversal) instead of the intended most-recent message
+
+### Evidence & Testing
+
+**Test 1: Original Order Conversation**
+- Sent 13-message conversation with first message about "protein/Six-Ounce Center/beating our heart"
+- Last message about "vaccines/plants/hot deal/2495"
+- **Result**: Model responded about "Six-Ounce Center" and "protein" (first message topics)
+
+**Test 2: Reversed Order Conversation**  
+- Sent the same conversation with messages manually reversed
+- Now "vaccines" message was first, "protein" message was last
+- **Result**: Model responded about "vaccines", "plants", "hot deal", "2495" (what was originally the last message)
+
+**Test 3: Product List Request**
+- Changed the last message to: "Please list the names of five of the products you have heard about"
+- Expected: Model lists 5 products from throughout the conversation
+- **Actual**: Model only talked about "Six-Ounce Center" (the first product), completely ignoring the question asking for a list
+
+**Debug Evidence**:
+```
+DEBUG: Message[0] role=user, length=680, hash=1408712486810884044
+DEBUG: Message[0] middle snippet: ...beating our heart...
+DEBUG: Message[-1] role=user, length=67, hash=405190351691753379  
+DEBUG: Message[-1] middle snippet: ...the products you have heard about...
+```
+Model response ignored the actual last message and responded to the first one.
+
+### Root Cause
+
+The runtime's internal conversation context builder or KV cache management reverses the message order. This is likely in the C++ code that processes the `/api/chat` endpoint's message array.
+
+### Solution
+
+**Implemented in**: `services/qwen3-4b-raspi/src/runtime_adapter.py`
+
+The `reset_then_chat()` function now **reverses the message array before sending it to the runtime**:
+
+```python
+# CRITICAL FIX: The C++ runtime reverses the message array internally
+reversed_messages = list(reversed(messages))
+payload: Dict[str, Any] = {"messages": reversed_messages}
+```
+
+This way, when the runtime reverses it again, the messages end up in the correct chronological order.
+
+### Verification
+
+After implementing the fix, test with a multi-turn conversation and verify the model responds to the most recent message, not the first one.
+
+**Test command**:
+```bash
+curl -X POST http://127.0.0.1:8080/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen3-4b",
+    "messages": [
+      {"role": "user", "content": "FIRST: Tell me about apples"},
+      {"role": "assistant", "content": "Apples are fruits..."},
+      {"role": "user", "content": "LAST: Forget apples. Tell me about oranges instead."}
+    ]
+  }'
+```
+
+Expected: Model talks about oranges (most recent request)
+Before fix: Model would talk about apples (first message)
+
+---
+
 **End of setup notes. Continue with runtime startup and FastAPI integration.**
