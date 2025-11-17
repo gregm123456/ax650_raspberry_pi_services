@@ -14,6 +14,9 @@ __pycache__/
 *.bin
 *.tar.gz
 *.zip
+*.axmodel
+*.bfloat16.bin
+*.whl
 # Large model directories
 models/
 weights/
@@ -22,3 +25,22 @@ hf_mirrors/
 reference_projects_and_documentation/huggingface_mirrors/
 # avoid committing LFS files accidentally
 *.gltf
+
+# Downloaded model artifacts for Qwen3-4B (keep out of git)
+reference_projects_and_documentation/Qwen3-4B/qwen3-4b-ax650/
+reference_projects_and_documentation/Qwen3-4B/qwen3_tokenizer/
+reference_projects_and_documentation/Qwen3-4B/qwen2.5_tokenizer/
+
+# Downloaded AXCL runtime binaries (download from HF as needed)
+reference_projects_and_documentation/Qwen3-4B/main_axcl_aarch64
+reference_projects_and_documentation/Qwen3-4B/main_api_axcl_aarch64
+
+# Runtime logs and PID files (local only)
+reference_projects_and_documentation/Qwen3-4B/*.log
+reference_projects_and_documentation/Qwen3-4B/*.pid
+qwen3*.log
+qwen3*.pid
+
+# HuggingFace cache (local only)
+.cache/
+*/.cache/
