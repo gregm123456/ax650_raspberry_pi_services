@@ -40,6 +40,7 @@ reference_projects_and_documentation/Qwen3-4B/*.log
 reference_projects_and_documentation/Qwen3-4B/*.pid
 qwen3*.log
 qwen3*.pid
+fastapi*.log
 
 # HuggingFace cache (local only)
 .cache/

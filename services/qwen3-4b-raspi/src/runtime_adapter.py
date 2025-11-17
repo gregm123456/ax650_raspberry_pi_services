@@ -75,6 +75,18 @@ class RuntimeAdapter:
 
             # 2. Attempt to chat with a retry loop
             payload: Dict[str, Any] = {"messages": messages}
+            
+            # Debug: Log the first and last message to verify order
+            if messages:
+                print(f"DEBUG: Total messages being sent: {len(messages)}")
+                print(f"DEBUG: Message[0] role={messages[0].get('role')}, length={len(messages[0].get('content', ''))}, hash={hash(messages[0].get('content', ''))}")
+                print(f"DEBUG: Message[-1] role={messages[-1].get('role')}, length={len(messages[-1].get('content', ''))}, hash={hash(messages[-1].get('content', ''))}")
+                # Show a distinctive snippet from the middle of each message
+                first_content = messages[0].get('content', '')
+                last_content = messages[-1].get('content', '')
+                print(f"DEBUG: Message[0] middle snippet: ...{first_content[len(first_content)//2:len(first_content)//2+80]}...")
+                print(f"DEBUG: Message[-1] middle snippet: ...{last_content[len(last_content)//2:len(last_content)//2+80]}...")
+            
             max_retries = 20  # Max attempts, increased for safety
             retry_delay = 0.2  # Seconds to wait between retries (200ms)
 

@@ -1,0 +1,17 @@
+{
+  "model": "qwen3-4b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "FIRST MESSAGE: I am asking about apples."
+    },
+    {
+      "role": "assistant",
+      "content": "I can help you with apples."
+    },
+    {
+      "role": "user",
+      "content": "SECOND MESSAGE: Actually, forget apples. Tell me about oranges instead."
+    }
+  ]
+}
